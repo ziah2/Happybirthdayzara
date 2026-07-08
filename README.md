@@ -173,32 +173,75 @@ footer{padding:3rem 1.5rem;text-align:center;border-top:1px solid rgba(255,179,1
 </footer>
 
 <script>
-const cursor=document.getElementById('cursor'),trail=document.getElementById('cursorTrail');
-let mx=0,my=0,tx=0,ty=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.transform=`translate(${mx}px,${my}px) translate(-50%,-50%)`;} );
-(function at(){tx+=(mx-tx)*0.12;ty+=(my-ty)*0.12;trail.style.transform=`translate(${tx}px,${ty}px) translate(-50%,-50%)`;requestAnimationFrame(at);})();
-const sc=document.getElementById('stars');
-for(let i=0;i<80;i++){const s=document.createElement('div');s.className='star';s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--t:${2+Math.random()*4}s;animation-delay:${Math.random()*5}s;width:${Math.random()<0.3?4:2}px;height:${Math.random()<0.3?4:2}px;`;sc.appendChild(s);}
-const pc=document.getElementById('particles');
+// Look up a required element and report clearly (instead of failing silently
+// later) when it is missing. Returns null so callers can guard.
+function requireEl(id){
+  const el=document.getElementById(id);
+  if(!el)console.error(`[birthday] required element #${id} not found; skipping the feature that depends on it.`);
+  return el;
+}
+// Run an independent init step in isolation so a failure in one feature is
+// surfaced but does not stop the others from initialising.
+function initFeature(name,fn){
+  try{fn();}
+  catch(err){console.error(`[birthday] failed to initialise "${name}":`,err);}
+}
+
+let confettiApi={trigger(){}};
+
+initFeature('custom cursor',()=>{
+  const cursor=requireEl('cursor'),trail=requireEl('cursorTrail');
+  if(!cursor||!trail)return;
+  let mx=0,my=0,tx=0,ty=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.transform=`translate(${mx}px,${my}px) translate(-50%,-50%)`;});
+  (function at(){tx+=(mx-tx)*0.12;ty+=(my-ty)*0.12;trail.style.transform=`translate(${tx}px,${ty}px) translate(-50%,-50%)`;requestAnimationFrame(at);})();
+});
+
 const colors=['#ff4d6d','#ffd166','#ffb3c1','#c77dff','#fff8f0'];
-for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};--d:${6+Math.random()*10}s;--delay:${Math.random()*8}s;width:${4+Math.random()*5}px;height:${4+Math.random()*5}px;border-radius:${Math.random()<0.3?'2px':'50%'};`;pc.appendChild(p);}
-const canvas=document.getElementById('cc'),ctx=canvas.getContext('2d');
-canvas.width=window.innerWidth;canvas.height=window.innerHeight;
-window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
-let pieces=[],running=false;
-function triggerConfetti(){
-  pieces=[];
-  for(let i=0;i<200;i++)pieces.push({x:Math.random()*canvas.width,y:-30-Math.random()*80,w:8+Math.random()*8,h:5+Math.random()*5,color:colors[Math.floor(Math.random()*colors.length)],angle:Math.random()*Math.PI*2,spin:(Math.random()-0.5)*0.2,vx:(Math.random()-0.5)*4,vy:2+Math.random()*4,op:1});
-  if(!running){running=true;draw();}
-}
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  pieces=pieces.filter(p=>p.op>0.05);
-  pieces.forEach(p=>{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.globalAlpha=p.op;ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.angle+=p.spin;if(p.y>canvas.height-40)p.op-=0.025;});
-  if(pieces.length)requestAnimationFrame(draw);else{running=false;ctx.clearRect(0,0,canvas.width,canvas.height);}
-}
-const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');e.target.style.transition=`opacity 0.7s ${Array.from(document.querySelectorAll('.wish-card')).indexOf(e.target)*0.12}s ease, transform 0.7s ${Array.from(document.querySelectorAll('.wish-card')).indexOf(e.target)*0.12}s ease`;}}),{threshold:0.1});
-document.querySelectorAll('.wish-card').forEach(el=>obs.observe(el));
+
+initFeature('stars',()=>{
+  const sc=requireEl('stars');
+  if(!sc)return;
+  for(let i=0;i<80;i++){const s=document.createElement('div');s.className='star';s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--t:${2+Math.random()*4}s;animation-delay:${Math.random()*5}s;width:${Math.random()<0.3?4:2}px;height:${Math.random()<0.3?4:2}px;`;sc.appendChild(s);}
+});
+
+initFeature('particles',()=>{
+  const pc=requireEl('particles');
+  if(!pc)return;
+  for(let i=0;i<30;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=`left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};--d:${6+Math.random()*10}s;--delay:${Math.random()*8}s;width:${4+Math.random()*5}px;height:${4+Math.random()*5}px;border-radius:${Math.random()<0.3?'2px':'50%'};`;pc.appendChild(p);}
+});
+
+initFeature('confetti',()=>{
+  const canvas=requireEl('cc');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  if(!ctx){console.error('[birthday] 2D canvas context unavailable; confetti disabled.');return;}
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+  let pieces=[],running=false;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces=pieces.filter(p=>p.op>0.05);
+    pieces.forEach(p=>{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.globalAlpha=p.op;ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.angle+=p.spin;if(p.y>canvas.height-40)p.op-=0.025;});
+    if(pieces.length)requestAnimationFrame(draw);else{running=false;ctx.clearRect(0,0,canvas.width,canvas.height);}
+  }
+  confettiApi.trigger=function(){
+    pieces=[];
+    for(let i=0;i<200;i++)pieces.push({x:Math.random()*canvas.width,y:-30-Math.random()*80,w:8+Math.random()*8,h:5+Math.random()*5,color:colors[Math.floor(Math.random()*colors.length)],angle:Math.random()*Math.PI*2,spin:(Math.random()-0.5)*0.2,vx:(Math.random()-0.5)*4,vy:2+Math.random()*4,op:1});
+    if(!running){running=true;draw();}
+  };
+});
+
+// Exposed for the inline onclick handler; guarded so a click never throws even
+// if the confetti feature failed to initialise.
+function triggerConfetti(){confettiApi.trigger();}
+
+initFeature('wish-card reveal',()=>{
+  if(!('IntersectionObserver' in window)){console.warn('[birthday] IntersectionObserver unsupported; revealing wish cards immediately.');document.querySelectorAll('.wish-card').forEach(el=>el.classList.add('visible'));return;}
+  const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');e.target.style.transition=`opacity 0.7s ${Array.from(document.querySelectorAll('.wish-card')).indexOf(e.target)*0.12}s ease, transform 0.7s ${Array.from(document.querySelectorAll('.wish-card')).indexOf(e.target)*0.12}s ease`;}}),{threshold:0.1});
+  document.querySelectorAll('.wish-card').forEach(el=>obs.observe(el));
+});
+
 window.addEventListener('load',()=>setTimeout(triggerConfetti,1800));
 </script>
 </body>
