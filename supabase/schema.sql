@@ -292,6 +292,13 @@ create trigger sync_news_likes_trg
   after insert or delete on public.news_likes
   for each row execute function public.sync_news_likes();
 
+-- Atomic download-counter increment (avoids read-modify-write races).
+create or replace function public.increment_note_downloads(p_note_id uuid)
+returns void language sql security definer set search_path = public as $$
+  update public.notes set downloads = downloads + 1 where id = p_note_id;
+$$;
+grant execute on function public.increment_note_downloads(uuid) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Enable RLS on every table
 -- ---------------------------------------------------------------------------

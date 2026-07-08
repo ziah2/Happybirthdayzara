@@ -25,8 +25,8 @@ export function AppShell() {
     <div className="app-shell">
       <div className="top-bar">
         <div className="brand">
-          <span>🎓</span>
-          <span>Student Hub</span>
+          <img src="/oaustech-logo.png" alt="OAUSTECH" className="brand-logo" />
+          <span>OAUSTECH Student Hub</span>
         </div>
         <div className="row" style={{ gap: 14 }}>
           <div className="row" style={{ gap: 8 }}>

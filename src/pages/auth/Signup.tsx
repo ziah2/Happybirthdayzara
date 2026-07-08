@@ -88,6 +88,7 @@ export function Signup() {
     <div className="center-screen">
       <Card className="auth-card">
         <div className="center" style={{ marginBottom: 18 }}>
+          <img src="/oaustech-logo.png" alt="OAUSTECH" className="auth-logo-img" />
           <h2 style={{ fontSize: 22 }}>Create your account</h2>
           <p className="muted tiny">All registrations create a student account</p>
         </div>

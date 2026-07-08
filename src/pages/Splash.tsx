@@ -18,7 +18,7 @@ export function Splash() {
 
   return (
     <div className="splash">
-      <div className="splash-logo">🎓</div>
+      <img src="/oaustech-logo.png" alt="OAUSTECH" className="splash-logo-img" />
       <h1 style={{ fontSize: 26 }}>OAUSTECH Student Hub</h1>
       <p className="muted">Your campus, all in one place</p>
       <div

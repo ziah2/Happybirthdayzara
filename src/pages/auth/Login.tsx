@@ -28,9 +28,7 @@ export function Login() {
     <div className="center-screen">
       <Card className="auth-card">
         <div className="center" style={{ marginBottom: 20 }}>
-          <div className="splash-logo" style={{ width: 64, height: 64, fontSize: 30, margin: '0 auto 12px' }}>
-            🎓
-          </div>
+          <img src="/oaustech-logo.png" alt="OAUSTECH" className="auth-logo-img" />
           <h2 style={{ fontSize: 22 }}>Welcome back</h2>
           <p className="muted tiny">Sign in to OAUSTECH Student Hub</p>
         </div>

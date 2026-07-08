@@ -30,13 +30,15 @@ export function Chat() {
       setLoading(false);
       return;
     }
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
     (async () => {
       const { data: chat } = await supabase
         .from('chats')
         .select('id')
         .eq('department_id', profile.department_id)
         .maybeSingle();
-      if (!chat) {
+      if (!chat || cancelled) {
         setLoading(false);
         return;
       }
@@ -47,11 +49,12 @@ export function Chat() {
         .eq('chat_id', chat.id)
         .order('created_at')
         .limit(200);
+      if (cancelled) return;
       const rows = (data as (Message & { users: { full_name: string } | null })[] | null) ?? [];
       setMessages(rows.map((r) => ({ ...r, senderName: r.users?.full_name ?? 'Student' })));
       setLoading(false);
 
-      const channel = supabase
+      channel = supabase
         .channel(`chat:${chat.id}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${chat.id}` }, async (payload) => {
           const m = payload.new as Message;
@@ -59,10 +62,11 @@ export function Chat() {
           setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, { ...m, senderName: u?.full_name ?? 'Student' }]));
         })
         .subscribe();
-      return () => {
-        supabase.removeChannel(channel);
-      };
     })();
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [profile?.department_id]);
 
   useEffect(() => {

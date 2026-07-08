@@ -83,8 +83,10 @@ export function Notes() {
 
   async function download(n: Note) {
     if (!isVerified) return flash('Verify your email to download.');
-    await supabase.from('notes').update({ downloads: n.downloads + 1 }).eq('id', n.id);
+    // Atomic DB-side increment (avoids the read-modify-write race on concurrent downloads).
+    await supabase.rpc('increment_note_downloads', { p_note_id: n.id });
     if (user) await supabase.from('downloads').insert({ user_id: user.id, note_id: n.id });
+    setNotes((prev) => prev?.map((x) => (x.id === n.id ? { ...x, downloads: x.downloads + 1 } : x)) ?? prev);
     window.open(n.file_url, '_blank');
   }
 
